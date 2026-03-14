@@ -1,8 +1,7 @@
 import image
 import flet
 import ytdlp
-def main():
-    flet.run(image.Main_page)
+def main(page:flet.page):
+    image.GraphicalInterface(page).main_page()
 
-
-main()
+flet.run(main)
