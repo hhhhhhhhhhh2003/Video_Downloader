@@ -12,8 +12,6 @@ def format_duration(seconds):
     s = int(seconds % 60)
     return f"{h}:{m:02d}:{s:02d}"
 
-
-
 class GraphicalInterface:
     def __init__(self,page:flet.Page):
         self.page=page
@@ -48,29 +46,16 @@ class GraphicalInterface:
             value=True,
             on_change=None
             )
-        self.video_extension=[
-            flet.Checkbox(
-            label='mp4',
-            value=True,
-            on_change=functools.partial(self.video_file_extension,extension=0)
-            ),
-            flet.Checkbox(
-            label='mkv',
-            value=False,
-            on_change=functools.partial(self.video_file_extension,extension=1)
-                ),
-            flet.Checkbox(
-                label='webm',
-                value=False,
-                on_change=functools.partial(self.video_file_extension,extension=2)
-                ),
-            flet.Checkbox(
-                label='mov',
-                value=False,
-                on_change=functools.partial(self.video_file_extension,extension=3)
-                )
-            ]
-
+        self.video_extension2=flet.Dropdown(
+            text='mp4',
+            options=[
+                flet.DropdownOption(key=1,text="mp4"),
+                flet.DropdownOption(key=2,text='mkv'),
+                flet.DropdownOption(key=3,text='webm'),
+                flet.DropdownOption(key=4,text='mov')
+                ],
+            on_select=self.video_file_extension
+            )
     def warning(self,message):
         c=flet.AlertDialog(
             modal=True,
@@ -84,13 +69,8 @@ class GraphicalInterface:
             )
         self.page.show_dialog(c)
 
-    async def video_file_extension(self,e,extension):
-        o=0
-        self.preferredformat=self.video_extension[extension].label
-        for i in self.video_extension:
-            if(o!=extension):
-                i.value=False
-            o+=1
+    async def video_file_extension(self,e):
+        self.preferredformat=self.video_extension2.text
 
     async def jump_settings(self):
         await self.page.push_route("/settings")
@@ -276,7 +256,7 @@ class GraphicalInterface:
                                 self.download_subtitles_checkbox
                                 ]
                             ),
-                        flet.Row(controls=self.video_extension)
+                        self.video_extension2
                         ]
                     )
                 )
