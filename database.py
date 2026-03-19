@@ -14,13 +14,13 @@ class Database:
         format INT NOT NULL,
         video INT NOT NULL,
         audio INT NOT NULL,
-        subtitles INT NOT NULL
+        subtitles TEXT NOT NULL
         );
         ''')
         self.settings_command.execute('''
-        INSERT OR IGNORE INTO settings (id,download_path,mp4,mkv,webm,mov,video,audio,subtitles)
+        INSERT OR IGNORE INTO settings (id,download_path,video,video,audio,subtitles)
         VALUES (?, ?, ?, ?, ?, ?);
-        ''',(1,o,1,1,1,1)
+        ''',(1,o,1,1,1,'mp4')
         )
         self.settings_sqlite.commit()
         self.library=sqlite3.connect('library.db')
@@ -32,8 +32,9 @@ class Database:
         );
         ''')
         self.library_command.execute('''
-        CREATE INDEX library ON URL(url)
+        CREATE INDEX idx_url ON library(url)
         ''')
+        self.library.commit()
 
     def return_to_settings(self):
         self.settings_command.execute("SELECT * FROM settings WHERE id=1")
