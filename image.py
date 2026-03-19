@@ -11,14 +11,17 @@ def format_duration(seconds):
     m = int((seconds % 3600) // 60)
     s = int(seconds % 60)
     return f"{h}:{m:02d}:{s:02d}"
+
+
+
 class GraphicalInterface:
     def __init__(self,page:flet.Page):
         self.page=page
+        self.page.theme_mode = flet.ThemeMode.LIGHT
         self.table_container = flet.Column(scroll=flet.ScrollMode.AUTO, expand=True)
         self.prompt_word=flet.TextField(label=language.Prompt_word)
         self.download_catalog=flet.TextField(label=language.Download_catalog)
         self.download_catalog.value=os.path.join(os.path.expanduser('~'),"Downloads")
-        self.download_content=[True for i in range(3)]
         self.progress_bar=flet.ProgressBar(width=400,visible=False)
         self.progress_text=flet.Text("准备中",visible=False)
         self.file_picker=flet.FilePicker()
@@ -28,27 +31,88 @@ class GraphicalInterface:
         self.download_button=flet.Button(content=language.Download,on_click=self.download_selected)
         self.page.on_route_change=self.main_page
         self.page.on_view_pop=self.view_pop
-        self.main_page
-    
+        self.video_List=set()
+        self.preferredformat='mp4'
+        self.download_video_checkbox=flet.Checkbox(
+            label="下载视频",
+            value=True,
+            on_change=None
+            )
+        self.download_audio_checkbox=flet.Checkbox(
+            label='下载音频',
+            value=True,
+            on_change=None
+            )
+        self.download_subtitles_checkbox=flet.Checkbox(
+            label='下载字幕',
+            value=True,
+            on_change=None
+            )
+        self.video_extension=[
+            flet.Checkbox(
+            label='mp4',
+            value=True,
+            on_change=functools.partial(self.video_file_extension,extension=0)
+            ),
+            flet.Checkbox(
+            label='mkv',
+            value=False,
+            on_change=functools.partial(self.video_file_extension,extension=1)
+                ),
+            flet.Checkbox(
+                label='webm',
+                value=False,
+                on_change=functools.partial(self.video_file_extension,extension=2)
+                ),
+            flet.Checkbox(
+                label='mov',
+                value=False,
+                on_change=functools.partial(self.video_file_extension,extension=3)
+                )
+            ]
+
+    def warning(self,message):
+        c=flet.AlertDialog(
+            modal=True,
+            content=flet.Text(message),
+            actions=[
+                flet.TextButton(
+                    content="关闭",
+                    on_click=lambda e: self.page.pop_dialog()
+                    )],
+            actions_alignment=flet.MainAxisAlignment.END
+            )
+        self.page.show_dialog(c)
+
+    async def video_file_extension(self,e,extension):
+        o=0
+        self.preferredformat=self.video_extension[extension].label
+        for i in self.video_extension:
+            if(o!=extension):
+                i.value=False
+            o+=1
 
     async def jump_settings(self):
         await self.page.push_route("/settings")
 
     async def select_path(self,e):
-        o= await self.file_picker.get_directory_path(dialog_title="选择文件夹")
+        o = await self.file_picker.get_directory_path(dialog_title="选择文件夹")
         if(o!=None):
             self.download_catalog.value = o
         self.file_picker.path=self.download_catalog.value
-
-    async def handle_checkbox_change(self,e,n):
-        self.download_content[n]=not self.download_content[n]
 
     async def parse_button_actions(self):
             self.parse_button.disabled=True
             self.download_button.disabled=True
             self.parse_button.update()
             self.download_button.update()
-            inventory_items=await asyncio.to_thread(ytdlp.Parsing_operations, self.prompt_word.value)
+            analysis_task=ytdlp.ParsingOperations(self.prompt_word.value)
+            inventory_items=await asyncio.to_thread(analysis_task.parse_playlist)
+            if inventory_items is False:
+                self.warning(analysis_task.error)
+                self.parse_button.disabled=False
+                self.download_button.disabled=False
+                return 
             rows=[]
             for item in inventory_items:
                 rows.append(
@@ -82,7 +146,7 @@ class GraphicalInterface:
             self.parse_button.update()
             self.download_button.update()
 
-    def make_progress_hook(self,loop,page, progress_bar, progress_text):
+    def make_progress_hook(self,loop):
         def hook(d):
             if d['status'] == 'downloading':
                 total = d.get('total_bytes') or d.get('total_bytes_estimate')
@@ -128,30 +192,37 @@ class GraphicalInterface:
         self.download_button.disabled=True
         self.parse_button.update()
         self.download_button.update()
-        selected_urls=[]
-        for row in table.rows:
-            if(row.selected):
-                url_cell=row.cells[3].content
-                if isinstance(url_cell,flet.Text):
-                    url=url_cell.value
-                    selected_urls.append(url)
+        loop = asyncio.get_running_loop()
+        download_class=ytdlp.DownloadOperate(
+            download_path=self.download_catalog.value,
+            bestvideo=self.download_video_checkbox.value,
+            bestaudio=self.download_audio_checkbox.value,
+            coding='mp3',
+            subtitle=self.download_subtitles_checkbox.value,
+            preferredformat=self.preferredformat
+            )
         self.progress_bar.visible = True
         self.progress_text.visible = True
         self.progress_bar.update()
         self.progress_text.update()
-        loop = asyncio.get_running_loop()
-        for url in selected_urls:
-            hook = self.make_progress_hook(loop,self.page, self.progress_bar, self.progress_text)
-            await asyncio.to_thread(
-                ytdlp.download_operate,
-                download_path=self.download_catalog.value,
-                bestvideo=self.download_content[0],
-                bestaudio=self.download_content[1],
-                coding='m4a',
-                subtitle=self.download_content[2],
+        for row in table.rows:
+            if(row.selected):
+                url_cell=row.cells[3].content
+                url=url_cell.value
+                c=row.cells[0].content
+                c=c.value
+                print(f"{c}速度佛法入手哦inrijfn")
+                hook = self.make_progress_hook(loop)
+                o=await asyncio.to_thread(
+                download_class.download_operate,
+                progress_callback=hook,
                 url=url,
-                progress_callback=hook
+                i=c
                 )
+                if o:
+                    row.selected=False
+                else:
+                    await asyncio.to_thread(self.warning,message=download_class.error)
         self.parse_button.disabled=False
         self.download_button.disabled=False
         self.parse_button.update()
@@ -200,32 +271,12 @@ class GraphicalInterface:
                                 ]),
                         flet.Row(
                             controls=[
-                                flet.Checkbox(
-                                    label="下载视频",
-                                    value=True,
-                                    on_change=functools.partial(
-                                        self.handle_checkbox_change,
-                                        n=0
-                                        )
-                                    ),
-                                flet.Checkbox(
-                                    label='下载音频',
-                                    value=True,
-                                    on_change=functools.partial(
-                                        self.handle_checkbox_change,
-                                        n=1
-                                        )
-                                    ),
-                                flet.Checkbox(
-                                    label='下载字幕',
-                                    value=True,
-                                    on_change=functools.partial(
-                                        self.handle_checkbox_change,
-                                        n=2
-                                        )
-                                    )
+                                self.download_video_checkbox,
+                                self.download_audio_checkbox,
+                                self.download_subtitles_checkbox
                                 ]
-                            )
+                            ),
+                        flet.Row(controls=self.video_extension)
                         ]
                     )
                 )
