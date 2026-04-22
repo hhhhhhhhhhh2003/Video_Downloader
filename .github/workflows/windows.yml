@@ -28,23 +28,24 @@ jobs:
           pip install yt-dlp
 
       - name: Build with Nuitka
+        shell: pwsh
         run: |
           python -m nuitka `
             --standalone `
-            --onefile `
             --msvc=latest `
             --assume-yes-for-downloads `
             --nofollow-import-to=rich `
             --nofollow-import-to=tkinter `
-            --plugin-enable=pylint-warnings `
-            --show-progress `
-            --output-dir=dist `
-            --jobs=1 `
+            --enable-plugin=pylint-warnings `
+            --output-dir=build `
+            --low-memory `
             --lto=no `
+            --show-scons  `
+            --jobs=1 `
             main.py
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: compiled-executable
-          path: dist/*.exe
+          path: build/main.dist
