@@ -1,40 +1,44 @@
-name: Nuitka Build Windows
-on: 
-  workflow_dispatch: # 支持手动点击运行
-  push:
-    tags:
-      - 'v*'      # 推送标签时触发
+name: Build Executable with Nuitka
+on:
+  workflow_dispatch:
 
 jobs:
-  build-windows:
+  build:
     runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      - name: Set up Python
+    steps:
+      -  name:Checkout Code
+         uses: actions/checkout@v4
+
+      - name: Setup Python
         uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-          cache: 'pip'
+        whit:
+        python-version:'3.13'
+        architecture: 'x64'
+        cache: 'pip'
 
       - name: Install Dependencies
         run: |
-          pip install nuitka zstandard
-          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+        python -m pip install --upgrade pip
+        pip install nuitka
+        pip install 'flet[all]'
+        pip install yt-dlp
 
-      # Windows 建议加上 --windows-disable-console（如果是 GUI 程序）
       - name: Build with Nuitka
-        run: |
-          python -m nuitka `
-            --standalone `
-            --onefile `
-            --output-dir=dist `
-            main.py
-        # 注意：Windows 换行符在 PowerShell 里是 ` (反引号)
+  shell: pwsh
+  run: |
+    python -m nuitka `
+      --standalone `
+      --onefile `
+      --msvc=latest `
+      --assume-yes-for-downloads `
+      --show-progress `
+      --show-scons `
+      --output-dir=dist `
+      main.py
 
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: Windows-Executable
-          path: dist/*.exe
+  - name: Upload Artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: compiled-executable
+    path: dist/*.exe
