@@ -30,7 +30,10 @@ jobs:
       - name: Build with Nuitka
         shell: pwsh
         run: |
-          python -m nuitka `
+            $env:TMP = "${{ github.workspace }}\temp"
+            $env:TEMP = "${{ github.workspace }}\temp"
+            New-Item -ItemType Directory -Force -Path $env:TMP
+            python -m nuitka `
             --standalone `
             --msvc=latest `
             --assume-yes-for-downloads `
@@ -43,6 +46,13 @@ jobs:
             --show-scons  `
             --jobs=1 `
             main.py
+
+      - name: Upload Crash Report (if any)
+        if: failure()  # 仅在构建失败时执行
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuitka-crash-report
+          path: nuitka-crash-report.xml
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
