@@ -2,7 +2,6 @@ import time
 import flet
 import threading
 import crawl
-import asyncio
 class DownloadView:
     def __init__(self,page):
         self.page=page
@@ -51,12 +50,16 @@ class DownloadView:
                 raise
             if d['status']=='downloading':
                 curr_time=time.time()
-                if curr_time-self.update_time>2:
+                if curr_time-self.update_time>0:
                     total=d.get('total_bytes')
-                    percent=d['downloaded_bytes']/total*100
-                    self.progress_bar.value=percent/100
+                    percent=d.get('downloaded_bytes')
+                    self.progress_bar.value=percent/total
                     self.update_time=time.time()
-                    print(1)
+                    if self.progress_bar.value == 1:
+                        self.update_time=0
+                    self.progress_bar.update()
+                    print()
+                    print(total,percent)
 
     def create(self):
         return flet.Column(
