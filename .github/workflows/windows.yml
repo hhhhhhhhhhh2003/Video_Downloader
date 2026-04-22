@@ -25,6 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install nuitka
           pip install 'flet[all]'
+          pip install yt-dlp
 
       - name: Build with Nuitka
         shell: pwsh
