@@ -37,6 +37,7 @@ jobs:
             --assume-yes-for-downloads `
             --show-progress `
             --show-scons `
+            --jobs=2 `
             --output-dir=dist `
             main.py  # <--- 这里改成你的主程序文件名
 
