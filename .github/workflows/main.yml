@@ -30,6 +30,7 @@ jobs:
             --standalone `
             --onefile `
             --output-dir=dist `
+            --msvc=latest `
             main.py
         # 注意：Windows 换行符在 PowerShell 里是 ` (反引号)
 
