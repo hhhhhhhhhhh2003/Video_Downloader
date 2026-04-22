@@ -39,7 +39,7 @@ jobs:
             --plugin-enable=pylint-warnings `
             --show-progress `
             --output-dir=dist `
-            --jsob=1 `
+            --jobs=1 `
             --lto=no `
             main.py
 
