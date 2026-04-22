@@ -24,8 +24,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nuitka
-          # 如果你有 requirements.txt，请取消下面行的注释
-          # pip install -r requirements.txt
+          pip install 'flet[all]'
 
       - name: Build with Nuitka
         shell: pwsh
