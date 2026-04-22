@@ -34,13 +34,13 @@ jobs:
             --onefile `
             --msvc=latest `
             --assume-yes-for-downloads `
-            --collect-all=flet `
-            --collect-all=yt_dlp `
             --nofollow-import-to=rich `
             --nofollow-import-to=tkinter `
             --plugin-enable=pylint-warnings `
             --show-progress `
             --output-dir=dist `
+            --jsob=1 `
+            --lto=no `
             main.py
 
       - name: Upload Artifact
