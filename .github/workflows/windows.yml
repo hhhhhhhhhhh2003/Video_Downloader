@@ -30,22 +30,25 @@ jobs:
       - name: Build with Nuitka
         shell: pwsh
         run: |
-            $env:TMP = "${{ github.workspace }}\temp"
-            $env:TEMP = "${{ github.workspace }}\temp"
-            New-Item -ItemType Directory -Force -Path $env:TMP
-            python -m nuitka `
-            --standalone `
-            --msvc=latest `
-            --assume-yes-for-downloads `
-            --nofollow-import-to=rich `
-            --nofollow-import-to=tkinter `
-            --enable-plugin=pylint-warnings `
-            --output-dir=build `
-            --low-memory `
-            --lto=no `
-            --show-scons  `
-            --jobs=1 `
-            main.py
+          $env:TMP = "${{ github.workspace }}\temp"
+          $env:TEMP = "${{ github.workspace }}\temp"
+          New-Item -ItemType Directory -Force -Path $env:TMP
+          python -m nuitka `
+          --standalone `
+          --msvc=latest `
+          --assume-yes-for-downloads `
+          --nofollow-import-to=rich `
+          --nofollow-import-to=tkinter `
+          --nofollow-import-to=yt_dlp `
+          --nofollow-import-to=yt_dlp.extractor `
+          --nofollow-import-to=yt_dlp.downloader `  
+          --enable-plugin=pylint-warnings `
+          --output-dir=build `
+          --low-memory `
+          --lto=no `
+          --show-scons `
+          --jobs=1 `
+          main.py
 
       - name: Upload Crash Report (if any)
         if: failure()  # 仅在构建失败时执行
