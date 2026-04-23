@@ -54,6 +54,11 @@ jobs:
 
           python -m nuitka @nuitkaArgs
 
+          $pythonSitePackages = python -c "import site; print(site.getsitepackages()[0])"
+          $ytDlpSource = Join-Path $pythonSitePackages "yt_dlp"
+          $distDir = "build\main.dist"
+          Copy-Item -Path $ytDlpSource -Destination $distDir -Recurse -Force
+
       - name: Upload Crash Report (if any)
         if: failure()
         uses: actions/upload-artifact@v4
